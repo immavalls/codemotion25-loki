@@ -11,7 +11,7 @@ loki.process "apache_access" {
     forward_to = [loki.write.local_loki.receiver]
 
     stage.regex {
-      expression = "^(?P<ip>[^ ]*) [^ ]* (?P<user>[^ ]*) \\[(?P<timestamp>[^\\]]*)\\] \"(?P<method>\\S+)(?: +(?P<path>[^ ]*) +\\S*)?\" (?P<code>[^ ]*) (?P<size>[^ ]*)(?: \"(?P<referer>[^\"]*)\" \"(?P<agent>.*)\")?$"
+      expression = "^(?P<ip>[^ ]*) [^ ]* (?P<user>[^ ]*) \\[(?P<timestamp>[^\\]]*)\\] \"(?P<method>\\S+)(?: +(?P<path>[^ ]*) +\\S*)?\" (?P<status_code>[^ ]*) (?P<size>[^ ]*)(?: \"(?P<referer>[^\"]*)\" \"(?P<agent>.*)\")?$"
     }
 
     stage.timestamp {
@@ -24,6 +24,7 @@ loki.process "apache_access" {
         values = {
             method = null,
             protocol  = null,
+            status_code = null,
         }
     }
 
