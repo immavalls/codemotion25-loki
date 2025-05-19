@@ -1,0 +1,48 @@
+local.file_match "apache_access" {
+    path_targets = [{
+        __address__ = "localhost",
+        __path__    = "/web/log/access.log",
+        instance    = constants.hostname,
+        job         = "apache",
+    }]
+}
+
+loki.process "apache_access" {
+    forward_to = [loki.write.local_loki.receiver]
+
+    stage.regex {
+      expression = "^(?P<ip>[^ ]*) [^ ]* (?P<user>[^ ]*) \\[(?P<timestamp>[^\\]]*)\\] \"(?P<method>\\S+)(?: +(?P<path>[^ ]*) +\\S*)?\" (?P<code>[^ ]*) (?P<size>[^ ]*)(?: \"(?P<referer>[^\"]*)\" \"(?P<agent>.*)\")?$"
+    }
+
+    stage.timestamp {
+      source   = "timestamp"
+      format   = "02/Jan/2006:15:04:05 -0700"
+      location = "Europe/Madrid"
+    }
+  
+    stage.labels {
+        values = {
+            method = null,
+            protocol  = null,
+        }
+    }
+
+    stage.static_labels {
+        values = {
+            logtype = "access",
+        }
+    }
+}
+
+loki.source.file "apache_access" {
+    targets    = local.file_match.apache_access.targets
+    forward_to = [loki.process.apache_access.receiver]
+}
+
+loki.write "local_loki" {
+  endpoint {
+		url       = "http://gateway:3100/loki/api/v1/push"
+		tenant_id = "tenant1"
+	}
+	external_labels = {}
+}
